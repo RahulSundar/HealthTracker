@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Amma Health">
+<meta name="theme-color" content="#6B4EFF">
+<title>Amma Health Tracker</title>
+<style>
+  :root {
+    --primary: #6B4EFF;
+    --primary-light: #EDE9FF;
+    --accent: #FF6B6B;
+    --accent2: #4ECDC4;
+    --accent3: #FFD93D;
+    --green: #6BCB77;
+    --bg: #F8F7FF;
+    --card: #FFFFFF;
+    --text: #2D2D2D;
+    --text2: #666;
+    --border: #E8E4FF;
+    --shadow: 0 2px 12px rgba(107,78,255,0.10);
+    --radius: 18px;
+    --nav-h: 72px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--text); font-size: 17px; }
+  body { overflow-x: hidden; }
+
+  /* ---- SCREENS ---- */
+  .screen { display: none; flex-direction: column; min-height: 100vh; padding-bottom: calc(var(--nav-h) + 8px); }
+  .screen.active { display: flex; }
+
+  /* ---- HEADER ---- */
+  .header { background: var(--primary); color: white; padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header .sub { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+  .header-right { text-align: right; }
+  .level-badge { background: rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 12px; font-size: 13px; font-weight: 600; }
+
+  /* ---- BOTTOM NAV ---- */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: white; border-top: 1px solid var(--border); display: flex; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: none; background: none; cursor: pointer; color: var(--text2); font-size: 11px; font-weight: 500; transition: color 0.2s; padding: 8px 0; }
+  .nav-btn.active { color: var(--primary); }
+  .nav-btn svg { width: 26px; height: 26px; }
+  .nav-btn.active svg { stroke: var(--primary); }
+  .nav-btn svg { stroke: var(--text2); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---- CARDS ---- */
+  .scroll-area { padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .card-title { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .card-title .icon { font-size: 20px; }
+
+  /* ---- DASHBOARD ---- */
+  .greeting { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .date-txt { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .points-row { display: flex; gap: 10px; margin-top: 4px; }
+  .pts-chip { background: var(--accent3); border-radius: 20px; padding: 4px 14px; font-size: 14px; font-weight: 700; color: #5a4000; }
+  .streak-chip { background: var(--accent); border-radius: 20px; padding: 4px 14px; font-size: 14px; font-weight: 700; color: white; }
+
+  .level-card { background: linear-gradient(135deg, var(--primary), #9B7AFF); color: white; border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; }
+  .level-card::after { content: ''; position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+  .level-name { font-size: 24px; font-weight: 800; }
+  .level-sub { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+  .xp-bar-bg { background: rgba(255,255,255,0.25); border-radius: 10px; height: 10px; margin-top: 12px; overflow: hidden; }
+  .xp-bar { background: var(--accent3); height: 100%; border-radius: 10px; transition: width 0.5s; }
+  .xp-label { font-size: 12px; opacity: 0.85; margin-top: 6px; }
+
+  .daily-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .daily-tile { background: var(--primary-light); border-radius: 14px; padding: 14px 12px; }
+  .daily-tile .t-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .daily-tile .t-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .daily-tile.warn .t-val { color: var(--accent); }
+  .daily-tile.good .t-val { color: var(--green); }
+
+  .tip-card { background: linear-gradient(135deg, #E8F5E9, #F1F8E9); border-left: 4px solid var(--green); border-radius: 14px; padding: 14px; }
+  .tip-card .tip-label { font-size: 12px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.5px; }
+  .tip-card .tip-text { font-size: 14px; color: var(--text); margin-top: 4px; line-height: 1.5; }
+
+  /* ---- PAIN ---- */
+  .pain-slider-wrap { padding: 10px 0; }
+  .pain-val-display { font-size: 56px; font-weight: 900; text-align: center; transition: color 0.3s; }
+  .pain-desc { text-align: center; font-size: 14px; color: var(--text2); margin-top: 4px; }
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; outline: none; margin: 16px 0; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; border-radius: 50%; background: var(--primary); cursor: pointer; box-shadow: 0 2px 8px rgba(107,78,255,0.4); }
+  .pain-scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-top: -8px; }
+
+  .body-parts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .body-part-btn { padding: 8px 14px; border-radius: 20px; border: 2px solid var(--border); background: white; font-size: 13px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+  .body-part-btn.sel { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .log-btn { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 4px; transition: transform 0.1s, box-shadow 0.1s; box-shadow: 0 4px 12px rgba(107,78,255,0.3); }
+  .log-btn:active { transform: scale(0.97); }
+  .log-btn.green { background: var(--green); box-shadow: 0 4px 12px rgba(107,203,119,0.3); }
+  .log-btn.red { background: var(--accent); box-shadow: 0 4px 12px rgba(255,107,107,0.3); }
+
+  .pain-history { display: flex; flex-direction: column; gap: 8px; }
+  .pain-entry { display: flex; align-items: center; gap: 12px; background: var(--bg); border-radius: 12px; padding: 10px 14px; }
+  .pain-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: white; flex-shrink: 0; }
+  .pain-entry-info { flex: 1; }
+  .pain-entry-parts { font-size: 13px; color: var(--text2); }
+  .pain-entry-time { font-size: 11px; color: #aaa; }
+
+  /* ---- FOOD ---- */
+  .meal-tabs { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .meal-tabs::-webkit-scrollbar { display: none; }
+  .meal-tab { padding: 8px 16px; border-radius: 20px; border: 2px solid var(--border); background: white; font-size: 13px; cursor: pointer; white-space: nowrap; font-weight: 600; color: var(--text2); transition: all 0.2s; flex-shrink: 0; }
+  .meal-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .food-search { width: 100%; padding: 13px 16px; border: 2px solid var(--border); border-radius: 14px; font-size: 16px; outline: none; background: white; margin-bottom: 8px; }
+  .food-search:focus { border-color: var(--primary); }
+  .food-results { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
+  .food-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: background 0.15s; }
+  .food-item:active { background: var(--primary-light); }
+  .food-name { font-size: 15px; font-weight: 600; }
+  .food-cal { font-size: 13px; color: var(--text2); }
+  .food-add-btn { width: 30px; height: 30px; background: var(--primary); color: white; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  .logged-meals { display: flex; flex-direction: column; gap: 8px; }
+  .logged-meal { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 12px; padding: 12px 14px; }
+  .logged-meal-left { flex: 1; }
+  .logged-meal-name { font-size: 14px; font-weight: 600; }
+  .logged-meal-meta { font-size: 12px; color: var(--text2); }
+  .del-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #ccc; padding: 4px; }
+
+  .calorie-bar-wrap { margin: 8px 0; }
+  .calorie-bar-bg { background: var(--bg); border-radius: 10px; height: 14px; overflow: hidden; border: 1px solid var(--border); }
+  .calorie-bar { height: 100%; border-radius: 10px; transition: width 0.4s; }
+  .calorie-label { display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px; }
+
+  /* ---- HABITS ---- */
+  .habit-item { display: flex; align-items: center; gap: 14px; background: var(--bg); border-radius: 14px; padding: 14px 16px; cursor: pointer; transition: background 0.2s; }
+  .habit-item.done { background: #F0FFF4; }
+  .habit-check { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; background: white; }
+  .habit-item.done .habit-check { background: var(--green); border-color: var(--green); }
+  .habit-check-icon { font-size: 15px; display: none; }
+  .habit-item.done .habit-check-icon { display: block; }
+  .habit-info { flex: 1; }
+  .habit-name { font-size: 16px; font-weight: 600; }
+  .habit-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .habit-pts { font-size: 12px; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 10px; flex-shrink: 0; }
+  .habit-progress { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+  .habit-step { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); background: white; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+  .habit-step.filled { background: var(--accent2); border-color: var(--accent2); }
+
+  /* ---- BMI ---- */
+  .bmi-display { text-align: center; padding: 16px 0; }
+  .bmi-number { font-size: 64px; font-weight: 900; color: var(--accent); }
+  .bmi-category { font-size: 16px; color: var(--text2); margin-top: 4px; }
+  .bmi-scale { display: flex; gap: 4px; margin: 16px 0 8px; }
+  .bmi-seg { flex: 1; height: 10px; border-radius: 5px; }
+  .bmi-marker-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--text2); }
+
+  .input-row { display: flex; gap: 10px; }
+  .input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--text2); }
+  .num-input { width: 100%; padding: 13px 14px; border: 2px solid var(--border); border-radius: 14px; font-size: 18px; font-weight: 700; outline: none; text-align: center; color: var(--text); }
+  .num-input:focus { border-color: var(--primary); }
+
+  .weight-history { display: flex; flex-direction: column; gap: 8px; }
+  .weight-entry { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border-radius: 12px; padding: 10px 14px; }
+  .weight-val { font-size: 18px; font-weight: 800; color: var(--primary); }
+  .weight-delta { font-size: 13px; font-weight: 700; }
+  .weight-delta.down { color: var(--green); }
+  .weight-delta.up { color: var(--accent); }
+  .weight-date { font-size: 12px; color: #aaa; }
+
+  /* ---- PROFILE ---- */
+  .profile-form { display: flex; flex-direction: column; gap: 14px; }
+  .conditions-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cond-chip { background: #FFF0F0; color: var(--accent); border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 600; }
+
+  /* ---- TOAST ---- */
+  .toast { position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; transform: translateX(-50%) translateY(20px); background: #2D2D2D; color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 600; z-index: 200; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---- MINI CHART ---- */
+  .mini-chart { width: 100%; height: 80px; }
+
+  /* ---- EMPTY STATE ---- */
+  .empty-state { text-align: center; padding: 24px; color: var(--text2); font-size: 14px; }
+  .empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+  /* ---- SECTION SEP ---- */
+  .section-sep { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 0 4px; }
+
+  /* Rec card */
+  .rec-item { display: flex; gap: 12px; align-items: flex-start; background: var(--bg); border-radius: 12px; padding: 12px 14px; }
+  .rec-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .rec-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .rec-body { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .rec-tag { display: inline-block; font-size: 10px; font-weight: 700; background: var(--accent); color: white; border-radius: 6px; padding: 2px 6px; margin-bottom: 4px; text-transform: uppercase; }
+  .rec-tag.green { background: var(--green); }
+  .rec-tag.blue { background: var(--accent2); }
+
+  /* Canvas chart */
+  canvas.sparkline { width: 100%; height: 70px; }
+</style>
+</head>
+<body>
+
+<!-- SCREENS -->
+<div id="screen-home" class="screen active">
+  <div class="header">
+    <div>
+      <div class="header h1" id="greeting-text" style="font-size:20px;font-weight:800;">Good morning 🌸</div>
+      <div class="sub" id="date-display"></div>
+    </div>
+    <div class="header-right">
+      <div class="level-badge" id="header-level">🌱 Seedling</div>
+    </div>
+  </div>
+  <div class="scroll-area">
+    <!-- Level card -->
+    <div class="level-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="level-name" id="dash-level-name">🌱 Seedling</div>
+          <div class="level-sub" id="dash-level-sub">Keep going — great things take time!</div>
+        </div>
+        <div style="font-size:36px;" id="dash-level-emoji">🌱</div>
+      </div>
+      <div class="xp-bar-bg">
+        <div class="xp-bar" id="xp-bar" style="width:0%"></div>
+      </div>
+      <div class="xp-label" id="xp-label">0 / 100 XP to next level</div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="daily-grid">
+      <div class="daily-tile" id="tile-pts">
+        <div class="t-val" id="dash-pts-today">0</div>
+        <div class="t-label">Points today</div>
+      </div>
+      <div class="daily-tile" id="tile-streak">
+        <div class="t-val" id="dash-streak">0</div>
+        <div class="t-label">Day streak 🔥</div>
+      </div>
+      <div class="daily-tile" id="tile-cal">
+        <div class="t-val" id="dash-cal">0</div>
+        <div class="t-label">kcal today</div>
+      </div>
+      <div class="daily-tile" id="tile-pain">
+        <div class="t-val" id="dash-pain">—</div>
+        <div class="t-label">Pain level</div>
+      </div>
+    </div>
+
+    <!-- Habits quick view -->
+    <div class="card">
+      <div class="card-title"><span class="icon">✅</span>Today's Habits</div>
+      <div id="dash-habits-mini" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+    <!-- Daily tip -->
+    <div class="tip-card" id="daily-tip">
+      <div class="tip-label">💡 Today's Tip</div>
+      <div class="tip-text" id="tip-text">Loading tip...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAIN SCREEN -->
+<div id="screen-pain" class="screen">
+  <div class="header">
+    <div><div style="font-size:20px;font-weight:800;">Pain Tracker</div><div class="sub">Log how you're feeling</div></div>
+  </div>
+  <div class="scroll-area">
+    <div class="card">
+      <div class="card-title"><span class="icon">🌡️</span>Overall Pain Level</div>
+      <div class="pain-slider-wrap">
+        <div class="pain-val-display" id="pain-val-display" style="color:#6BCB77;">1</div>
+        <div class="pain-desc" id="pain-desc">No pain — wonderful day!</div>
+        <input type="range" min="1" max="10" value="1" id="pain-slider" style="background: linear-gradient(to right, #6BCB77 0%, #6BCB77 0%, #e8e4ff 0%, #e8e4ff 100%);">
+        <div class="pain-scale-labels"><span>1 (None)</span><span>5 (Moderate)</span><span>10 (Severe)</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📍</span>Where does it hurt?</div>
+      <div class="body-parts" id="body-parts-selector">
+        <button class="body-part-btn" data-part="Fingers/Hands">Fingers / Hands</button>
+        <button class="body-part-btn" data-part="Wrists">Wrists</button>
+        <button class="body-part-btn" data-part="Elbows">Elbows</button>
+        <button class="body-part-btn" data-part="Shoulders">Shoulders</button>
+        <button class="body-part-btn" data-part="Neck">Neck</button>
+        <button class="body-part-btn" data-part="Upper Back">Upper Back</button>
+        <button class="body-part-btn" data-part="Lower Back">Lower Back</button>
+        <button class="body-part-btn" data-part="Hips">Hips</button>
+        <button class="body-part-btn" data-part="Knees">Knees</button>
+        <button class="body-part-btn" data-part="Ankles/Feet">Ankles / Feet</button>
+        <button class="body-part-btn" data-part="Whole Body">Whole Body</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">💭</span>How's your mood?</div>
+      <div class="body-parts" id="mood-selector">
+        <button class="body-part-btn" data-mood="😊 Good">😊 Good</button>
+        <button class="body-part-btn" data-mood="😐 Okay">😐 Okay</button>
+        <button class="body-part-btn" data-mood="😔 Low">😔 Low</button>
+        <button class="body-part-btn" data-mood="😴 Tired">😴 Tired</button>
+        <button class="body-part-btn" data-mood="😤 Frustrated">😤 Frustrated</button>
+      </div>
+    </div>
+
+    <button class="log-btn" id="pain-log-btn" onclick="logPain()">Log Pain (+10 pts) ✨</button>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📈</span>Pain History</div>
+      <canvas id="pain-chart" class="sparkline"></canvas>
+      <div class="pain-history" id="pain-history-list" style="margin-top:12px;">
+        <div class="empty-state"><div class="empty-icon">📋</div>No entries yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOD SCREEN -->
+<div id="screen-food" class="screen">
+  <div class="header">
+    <div><div style="font-size:20px;font-weight:800;">Food Tracker</div><div class="sub">Indian vegetarian diet</div></div>
+  </div>
+  <div class="scroll-area">
+    <!-- Calorie bar -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🔥</span>Calories Today</div>
+      <div class="calorie-bar-wrap">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+          <span id="cal-consumed">0 kcal eaten</span>
+          <span id="cal-remaining" style="color:var(--green);font-weight:700;"></span>
+        </div>
+        <div class="calorie-bar-bg">
+          <div class="calorie-bar" id="calorie-bar" style="width:0%;background:var(--green);"></div>
+        </div>
+        <div class="calorie-label">
+          <span style="color:var(--text2);">Target: <strong id="cal-target-disp">1400</strong> kcal</span>
+          <span id="cal-percent" style="font-weight:700;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meal type tabs -->
+    <div class="card" style="padding-bottom:14px;">
+      <div class="card-title"><span class="icon">🍽️</span>Log a Meal</div>
+      <div class="meal-tabs">
+        <button class="meal-tab active" data-meal="Breakfast">🌅 Breakfast</button>
+        <button class="meal-tab" data-meal="Lunch">☀️ Lunch</button>
+        <button class="meal-tab" data-meal="Dinner">🌙 Dinner</button>
+        <button class="meal-tab" data-meal="Snack">🫖 Snack</button>
+      </div>
+      <input class="food-search" id="food-search" type="text" placeholder="Search Indian food (e.g. dal, roti)..." oninput="searchFood(this.value)">
+      <div class="food-results" id="food-results"></div>
+    </div>
+
+    <!-- Logged meals -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📝</span>Today's Meals</div>
+      <div class="logged-meals" id="logged-meals">
+        <div class="empty-state"><div class="empty-icon">🥗</div>No meals logged yet</div>
+      </div>
+    </div>
+
+    <!-- Diet recommendations -->
+    <div class="section-sep">Diet recommendations for your conditions</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">💚</span>Anti-Inflammatory Foods</div>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="food-recs">
+        <div class="rec-item">
+          <div class="rec-icon">🫐</div>
+          <div><div class="rec-tag">RA + Thyroid</div><div class="rec-title">Turmeric & Ginger</div><div class="rec-body">Add to dal, sabzi or warm water daily. Curcumin reduces joint inflammation significantly.</div></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">🥬</div>
+          <div><div class="rec-tag green">Thyroid</div><div class="rec-title">Cooked Cruciferous Veg</div><div class="rec-body">Cook broccoli, cauliflower, cabbage before eating — raw versions interfere with thyroid function.</div></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">🫘</div>
+          <div><div class="rec-tag blue">Protein + RA</div><div class="rec-title">Dal, Rajma, Chole</div><div class="rec-body">2–3 servings/day. Legumes provide protein without purine load. Rajma has anti-inflammatory antioxidants.</div></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">🌰</div>
+          <div><div class="rec-tag">Omega-3</div><div class="rec-title">Flaxseeds & Walnuts</div><div class="rec-body">1 tbsp ground flaxseed in roti or curd. 4–5 walnuts daily. Best plant-based omega-3 for RA.</div></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">🚫</div>
+          <div><div class="rec-tag" style="background:#FF9800;">Avoid</div><div class="rec-title">Reduce these</div><div class="rec-body">White sugar, maida, deep-fried snacks, excess chai/coffee (≤2/day). These worsen inflammation and weight gain.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HABITS SCREEN -->
+<div id="screen-habits" class="screen">
+  <div class="header">
+    <div><div style="font-size:20px;font-weight:800;">Daily Habits</div><div class="sub">Small steps, big change</div></div>
+  </div>
+  <div class="scroll-area">
+    <div class="card">
+      <div class="card-title"><span class="icon">⚡</span>Today's Progress</div>
+      <div id="habits-progress-bar" style="margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+          <span id="habits-done-count">0 / 7 done</span>
+          <span id="habits-pts-earned" style="color:var(--primary);font-weight:700;">0 pts</span>
+        </div>
+        <div class="calorie-bar-bg">
+          <div class="calorie-bar" id="habits-bar" style="width:0%;background:var(--primary);"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="habits-list">
+      <div class="card-title"><span class="icon">🎯</span>Habit Checklist</div>
+      <!-- Habits rendered by JS -->
+    </div>
+
+    <!-- Habit tips -->
+    <div class="card">
+      <div class="card-title"><span class="icon">💧</span>Why These Habits Matter</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="rec-item">
+          <div class="rec-icon">💧</div>
+          <div><div class="rec-title">Hydration (8 glasses)</div><div class="rec-body">Lubricates joints — critical for RA and knee pain. Also supports thyroid hormone transport.</div></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">🥛</div>
+          <div><div class="rec-title">Protein (50–60g/day)</div><div class="rec-body">Prevents muscle loss which is accelerated with RA. Supports metabolism for thyroid function.</div></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">🌾</div>
+          <div><div class="rec-title">Fibre (25g/day)</div><div class="rec-body">Regulates blood sugar (thyroid link), reduces cholesterol, aids weight management.</div></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">☀️</div>
+          <div><div class="rec-title">Morning sunlight (15 min)</div><div class="rec-body">Vitamin D3 is often low in RA patients. Sunlight also regulates sleep and mood.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BMI SCREEN -->
+<div id="screen-bmi" class="screen">
+  <div class="header">
+    <div><div style="font-size:20px;font-weight:800;">BMI & Weight</div><div class="sub">Track your journey</div></div>
+  </div>
+  <div class="scroll-area">
+    <!-- BMI display -->
+    <div class="card">
+      <div class="card-title"><span class="icon">⚖️</span>Current BMI</div>
+      <div class="bmi-display">
+        <div class="bmi-number" id="bmi-number">31.0</div>
+        <div class="bmi-category" id="bmi-category">Obese Class I</div>
+      </div>
+      <div class="bmi-scale">
+        <div class="bmi-seg" style="background:#4FC3F7;flex:3.5;" title="Underweight <18.5"></div>
+        <div class="bmi-seg" style="background:#66BB6A;flex:6.5;" title="Normal 18.5–24.9"></div>
+        <div class="bmi-seg" style="background:#FFA726;flex:5;" title="Overweight 25–29.9"></div>
+        <div class="bmi-seg" style="background:#EF5350;flex:5;" title="Obese 30–34.9"></div>
+        <div class="bmi-seg" style="background:#B71C1C;flex:5;" title="Obese II 35+"></div>
+      </div>
+      <div class="bmi-marker-row"><span>18.5</span><span>25</span><span>30</span><span>35</span></div>
+      <div id="bmi-pointer-row" style="padding: 4px 0 0; font-size:13px; color: var(--text2); text-align:center;"></div>
+    </div>
+
+    <!-- Log weight -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span>Log Today's Weight</div>
+      <div class="input-row">
+        <div class="input-group">
+          <div class="input-label">Weight (kg)</div>
+          <input type="number" class="num-input" id="weight-input" placeholder="78" step="0.1" min="30" max="200">
+        </div>
+        <div class="input-group">
+          <div class="input-label">Height (cm)</div>
+          <input type="number" class="num-input" id="height-input" placeholder="155" min="100" max="220">
+        </div>
+      </div>
+      <button class="log-btn green" style="margin-top:12px;" onclick="logWeight()">Update Weight (+10 pts)</button>
+    </div>
+
+    <!-- Goal -->
+    <div class="card" style="background:linear-gradient(135deg,#E8F5E9,#F1F8E9);">
+      <div class="card-title"><span class="icon">🎯</span>Your Goal</div>
+      <div id="bmi-goal-text" style="font-size:15px;line-height:1.6;color:var(--text);">
+        To reach a healthy BMI (under 25), aim for <strong id="target-weight-disp">—</strong> kg.<br>
+        Safe weight loss for your age: <strong>0.5 kg/week</strong>.<br>
+        Estimated time at current pace: <span id="est-time" style="color:var(--primary);font-weight:700;">—</span>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:var(--text2);">⚠️ With subclinical thyroid, metabolism is slower — consistent small changes matter more than fast dieting.</div>
+    </div>
+
+    <!-- Weight history -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📉</span>Weight History</div>
+      <canvas id="weight-chart" class="sparkline"></canvas>
+      <div class="weight-history" id="weight-history-list" style="margin-top:12px;">
+        <div class="empty-state"><div class="empty-icon">📊</div>No entries yet. Log your first weight!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showScreen('home',this)">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" onclick="showScreen('pain',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Pain
+  </button>
+  <button class="nav-btn" onclick="showScreen('food',this)">
+    <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+    Food
+  </button>
+  <button class="nav-btn" onclick="showScreen('habits',this)">
+    <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Habits
+  </button>
+  <button class="nav-btn" onclick="showScreen('bmi',this)">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    BMI
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA LAYER — localStorage
+// ============================================================
+const DB_KEY = 'amma_health_v1';
+function loadDB() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY)) || defaultDB(); }
+  catch(e) { return defaultDB(); }
+}
+function saveDB(db) { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+function defaultDB() {
+  return {
+    profile: { name: 'Amma', height: 155, age: 60 },
+    totalXP: 0,
+    streak: 0,
+    lastLogDate: null,
+    painLogs: [],
+    foodLogs: [],
+    weightLogs: [],
+    habits: {}, // key: "YYYY-MM-DD_habitId" => bool
+  };
+}
+let db = loadDB();
+
+// ============================================================
+// GAMIFICATION
+// ============================================================
+const LEVELS = [
+  { name: 'Seedling', emoji: '🌱', min: 0, max: 100, sub: 'Every journey starts with one step!' },
+  { name: 'Sprout', emoji: '🌿', min: 100, max: 300, sub: 'You\'re growing stronger every day!' },
+  { name: 'Sapling', emoji: '🌳', min: 300, max: 600, sub: 'Building beautiful habits!' },
+  { name: 'Banyan', emoji: '🌲', min: 600, max: 1100, sub: 'Deep roots, strong health!' },
+  { name: 'Lotus', emoji: '🪷', min: 1100, max: 1700, sub: 'Blooming with wellness!' },
+  { name: 'Chakra', emoji: '⭐', min: 1700, max: 2500, sub: 'In perfect balance!' },
+  { name: 'Devi', emoji: '🌟', min: 2500, max: 9999, sub: 'You are a health goddess!' },
+];
+function getLevel(xp) {
+  for (let i = LEVELS.length - 1; i >= 0; i--) { if (xp >= LEVELS[i].min) return { ...LEVELS[i], idx: i }; }
+  return { ...LEVELS[0], idx: 0 };
+}
+function addXP(pts, label) {
+  const before = getLevel(db.totalXP);
+  db.totalXP += pts;
+  const after = getLevel(db.totalXP);
+  saveDB(db);
+  if (after.idx > before.idx) {
+    setTimeout(() => showToast(`🎉 Level up! You are now a ${after.emoji} ${after.name}!`), 400);
+  } else {
+    showToast(`+${pts} pts ${label || ''}`);
+  }
+  refreshDashboard();
+}
+
+// ============================================================
+// STREAK
+// ============================================================
+function checkStreak() {
+  const today = todayStr();
+  if (db.lastLogDate === today) return;
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yStr = yesterday.toISOString().slice(0,10);
+  if (db.lastLogDate === yStr) { db.streak = (db.streak||0) + 1; }
+  else if (db.lastLogDate !== today) { db.streak = 1; }
+  db.lastLogDate = today;
+  saveDB(db);
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'home') refreshDashboard();
+  if (name === 'food') refreshFood();
+  if (name === 'habits') renderHabits();
+  if (name === 'bmi') renderBMI();
+  if (name === 'pain') renderPainHistory();
+}
+
+// ============================================================
+// GREETING & DATE
+// ============================================================
+function initGreeting() {
+  const h = new Date().getHours();
+  let g = h < 12 ? 'Good morning 🌸' : h < 17 ? 'Good afternoon ☀️' : 'Good evening 🌙';
+  document.getElementById('greeting-text').textContent = g;
+  document.getElementById('date-display').textContent = new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+const TIPS = [
+  "Warm turmeric water (haldi doodh) before bed reduces morning joint stiffness.",
+  "Gentle 10-min walking after meals improves insulin sensitivity and joint mobility.",
+  "Soak walnuts overnight and eat 4 in the morning — best omega-3 start for RA.",
+  "Try 'oil pulling' with sesame oil for 5 min — traditional remedy for joint health.",
+  "A handful of methi (fenugreek) seeds soaked overnight helps thyroid function.",
+  "Avoid cold water/ice — warm or room-temp water is gentler on inflamed joints.",
+  "Rajma has anti-inflammatory polyphenols — aim for 2x/week in your diet.",
+  "Short 2-min stretches every hour are better for knee pain than long sessions.",
+  "Selenium in Brazil nuts (2/day) supports thyroid hormone conversion.",
+  "Vitamin D3 + K2 supplement with fat-containing meal improves absorption for RA.",
+  "Buttermilk (chaas) with lunch provides probiotics that reduce gut inflammation linked to RA.",
+  "Flaxseed chutney powder with dosa or roti is a delicious omega-3 boost!",
+];
+function getDailyTip() {
+  const idx = Math.floor((new Date() - new Date(2024,0,1)) / 86400000) % TIPS.length;
+  return TIPS[idx];
+}
+
+function refreshDashboard() {
+  const lv = getLevel(db.totalXP);
+  const nextLv = LEVELS[Math.min(lv.idx+1, LEVELS.length-1)];
+  const pct = lv.idx === LEVELS.length-1 ? 100 : Math.round(((db.totalXP - lv.min)/(nextLv.min - lv.min))*100);
+  document.getElementById('dash-level-name').textContent = lv.emoji + ' ' + lv.name;
+  document.getElementById('dash-level-sub').textContent = lv.sub;
+  document.getElementById('dash-level-emoji').textContent = lv.emoji;
+  document.getElementById('header-level').textContent = lv.emoji + ' ' + lv.name;
+  document.getElementById('xp-bar').style.width = pct + '%';
+  const xpNeeded = lv.idx === LEVELS.length-1 ? 'MAX' : (nextLv.min - db.totalXP) + ' XP to ' + nextLv.name;
+  document.getElementById('xp-label').textContent = `${db.totalXP} total XP · ${xpNeeded}`;
+
+  // Points today
+  const today = todayStr();
+  const todayFood = db.foodLogs.filter(f => f.date === today);
+  const todayPain = db.painLogs.filter(p => p.date === today);
+  const todayHabitDone = Object.keys(db.habits).filter(k => k.startsWith(today) && db.habits[k]).length;
+  const ptsToday = todayFood.length*15 + todayPain.length*10 + todayHabitDone*15;
+  document.getElementById('dash-pts-today').textContent = ptsToday;
+  document.getElementById('dash-streak').textContent = db.streak || 0;
+
+  // Calories
+  const cal = todayFood.reduce((s,f) => s+f.calories, 0);
+  document.getElementById('dash-cal').textContent = cal;
+  const tile = document.getElementById('tile-cal');
+  tile.classList.remove('warn','good');
+  if (cal > 1500) tile.classList.add('warn'); else if (cal > 0) tile.classList.add('good');
+
+  // Pain
+  const lastPain = todayPain.length ? todayPain[todayPain.length-1].level : null;
+  const painEl = document.getElementById('dash-pain');
+  painEl.textContent = lastPain || '—';
+  const painTile = document.getElementById('tile-pain');
+  painTile.classList.remove('warn','good');
+  if (lastPain) { if(lastPain >= 6) painTile.classList.add('warn'); else if (lastPain <= 3) painTile.classList.add('good'); }
+
+  // Habits mini
+  const miniWrap = document.getElementById('dash-habits-mini');
+  miniWrap.innerHTML = '';
+  HABITS_DEF.forEach(h => {
+    const done = db.habits[today+'_'+h.id];
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 0;';
+    div.innerHTML = `<span style="font-size:18px;">${h.icon}</span>
+      <span style="flex:1;font-size:14px;">${h.name}</span>
+      <span style="font-size:18px;">${done ? '✅' : '⬜'}</span>`;
+    miniWrap.appendChild(div);
+  });
+
+  document.getElementById('tip-text').textContent = getDailyTip();
+}
+
+// ============================================================
+// PAIN TRACKER
+// ============================================================
+const PAIN_COLORS = ['','#6BCB77','#6BCB77','#A8D672','#FFD93D','#FFD93D','#FFA726','#FF7043','#FF5252','#FF1744','#B71C1C'];
+const PAIN_DESCS = ['','No pain — wonderful day!','Barely noticeable','Mild, manageable','Noticeable but not limiting','Moderate — some activities hard','Moderate-severe — limiting','Severe — hard to focus','Very severe — most activities stopped','Extreme pain','Worst possible pain'];
+
+const slider = document.getElementById('pain-slider');
+slider.addEventListener('input', function() {
+  const v = +this.value;
+  const pct = ((v-1)/9)*100;
+  document.getElementById('pain-val-display').textContent = v;
+  document.getElementById('pain-val-display').style.color = PAIN_COLORS[v];
+  document.getElementById('pain-desc').textContent = PAIN_DESCS[v];
+  this.style.background = `linear-gradient(to right, ${PAIN_COLORS[v]} 0%, ${PAIN_COLORS[v]} ${pct}%, var(--border) ${pct}%, var(--border) 100%)`;
+});
+
+document.querySelectorAll('.body-part-btn').forEach(btn => {
+  btn.addEventListener('click', function() { this.classList.toggle('sel'); });
+});
+document.querySelectorAll('[data-mood]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('[data-mood]').forEach(b => b.classList.remove('sel'));
+    this.classList.add('sel');
+  });
+});
+
+function logPain() {
+  const level = +document.getElementById('pain-slider').value;
+  const parts = [...document.querySelectorAll('.body-part-btn.sel')].map(b => b.dataset.part);
+  const moodEl = document.querySelector('[data-mood].sel');
+  const mood = moodEl ? moodEl.dataset.mood : null;
+  db.painLogs.push({ date: todayStr(), ts: new Date().toISOString(), level, parts, mood });
+  checkStreak(); saveDB(db); addXP(10, '— pain logged 🩺');
+  renderPainHistory();
+}
+
+function renderPainHistory() {
+  const list = document.getElementById('pain-history-list');
+  const recent = [...db.painLogs].reverse().slice(0,10);
+  if (!recent.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No entries yet</div>'; drawPainChart([]); return; }
+  list.innerHTML = recent.map(e => `
+    <div class="pain-entry">
+      <div class="pain-dot" style="background:${PAIN_COLORS[e.level]}">${e.level}</div>
+      <div class="pain-entry-info">
+        <div class="pain-entry-parts">${e.parts&&e.parts.length ? e.parts.join(', ') : 'General'} ${e.mood||''}</div>
+        <div class="pain-entry-time">${fmtDate(e.ts)}</div>
+      </div>
+    </div>`).join('');
+  const last30 = db.painLogs.slice(-14);
+  drawPainChart(last30.map(e => e.level));
+}
+
+function drawPainChart(vals) {
+  const canvas = document.getElementById('pain-chart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 300; const H = 70;
+  canvas.width = W * 2; canvas.height = H * 2; canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.scale(2,2);
+  ctx.clearRect(0,0,W,H);
+  if (vals.length < 2) { ctx.fillStyle='#ccc'; ctx.font='12px sans-serif'; ctx.fillText('Log more entries to see trend',10,H/2); return; }
+  const min=0, max=10, pad=10;
+  const xStep = (W-pad*2)/(vals.length-1);
+  ctx.beginPath();
+  vals.forEach((v,i) => {
+    const x = pad + i*xStep;
+    const y = H - pad - ((v-min)/(max-min))*(H-pad*2);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='#6B4EFF'; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
+  vals.forEach((v,i) => {
+    const x = pad + i*xStep;
+    const y = H - pad - ((v-min)/(max-min))*(H-pad*2);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle=PAIN_COLORS[v]; ctx.fill();
+  });
+}
+
+// ============================================================
+// FOOD DATABASE
+// ============================================================
+const FOODS = [
+  // Breakfast
+  {n:'Idli (2 pcs)',c:150,p:4,f:1,fi:1,cat:'breakfast'},
+  {n:'Dosa (1 plain)',c:120,p:2.5,f:3,fi:1,cat:'breakfast'},
+  {n:'Upma (1 cup)',c:200,p:4,f:4,fi:3,cat:'breakfast'},
+  {n:'Poha (1 cup)',c:180,p:3,f:4,fi:2,cat:'breakfast'},
+  {n:'Oats porridge (1 bowl)',c:150,p:5,f:3,fi:4,cat:'breakfast'},
+  {n:'Whole wheat roti (1)',c:80,p:3,f:1,fi:2,cat:'staple'},
+  {n:'Methi paratha (1)',c:160,p:4,f:5,fi:3,cat:'breakfast'},
+  // Dal & Legumes
+  {n:'Toor dal (1 katori)',c:120,p:7,f:0.5,fi:4,cat:'dal'},
+  {n:'Moong dal (1 katori)',c:105,p:7,f:0.4,fi:3,cat:'dal'},
+  {n:'Chana dal (1 katori)',c:130,p:8,f:1,fi:5,cat:'dal'},
+  {n:'Rajma curry (1 katori)',c:145,p:8,f:3,fi:6,cat:'dal'},
+  {n:'Chole (1 katori)',c:140,p:7,f:4,fi:5,cat:'dal'},
+  {n:'Moong sprouts (1 cup)',c:70,p:7,f:0.4,fi:3,cat:'snack'},
+  // Vegetables
+  {n:'Palak sabzi (1 katori)',c:80,p:3,f:4,fi:2,cat:'sabzi'},
+  {n:'Bhindi (okra, 1 katori)',c:70,p:2,f:3,fi:3,cat:'sabzi'},
+  {n:'Gobi sabzi (1 katori)',c:90,p:2,f:4,fi:2.5,cat:'sabzi'},
+  {n:'Karela (bitter gourd)',c:55,p:1,f:0.2,fi:2,cat:'sabzi'},
+  {n:'Lauki (1 katori)',c:50,p:1,f:0.1,fi:1.5,cat:'sabzi'},
+  {n:'Mixed veg curry (1 katori)',c:100,p:3,f:4,fi:3,cat:'sabzi'},
+  // Rice
+  {n:'Brown rice (1 cup cooked)',c:215,p:5,f:2,fi:3.5,cat:'staple'},
+  {n:'White rice (1 cup cooked)',c:240,p:4,f:0.4,fi:0.6,cat:'staple'},
+  {n:'Khichdi (1 cup)',c:200,p:7,f:4,fi:3,cat:'staple'},
+  // Dairy
+  {n:'Curd/Dahi (1 cup)',c:100,p:8,f:4,fi:0,cat:'dairy'},
+  {n:'Buttermilk/Chaas (1 glass)',c:60,p:4,f:2,fi:0,cat:'dairy'},
+  {n:'Paneer (50g)',c:140,p:9,f:11,fi:0,cat:'dairy'},
+  {n:'Skimmed milk (1 glass)',c:80,p:8,f:0.2,fi:0,cat:'dairy'},
+  // Snacks
+  {n:'Fruit (1 medium)',c:80,p:1,f:0.2,fi:3,cat:'snack'},
+  {n:'Banana (1)',c:90,p:1,f:0.3,fi:2.5,cat:'snack'},
+  {n:'Apple (1)',c:80,p:0.4,f:0.2,fi:4,cat:'snack'},
+  {n:'Walnuts (4-5 halves)',c:130,p:3,f:13,fi:1.5,cat:'snack'},
+  {n:'Flaxseeds (1 tbsp)',c:55,p:2,f:4,fi:3,cat:'snack'},
+  {n:'Roasted chana (1/4 cup)',c:100,p:6,f:1.5,fi:4,cat:'snack'},
+  // Drinks
+  {n:'Haldi doodh (1 glass)',c:120,p:6,f:5,fi:0,cat:'drink'},
+  {n:'Green tea (no sugar)',c:2,p:0,f:0,fi:0,cat:'drink'},
+  {n:'Coconut water (1 glass)',c:45,p:0.5,f:0.5,fi:2,cat:'drink'},
+];
+
+let selectedMeal = 'Breakfast';
+document.querySelectorAll('.meal-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.meal-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active'); selectedMeal = this.dataset.meal;
+  });
+});
+
+function searchFood(q) {
+  const res = document.getElementById('food-results');
+  if (!q.trim()) { res.innerHTML=''; return; }
+  const matches = FOODS.filter(f => f.n.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  if (!matches.length) { res.innerHTML='<div style="padding:10px;color:var(--text2);font-size:14px;">No results. Try: dal, roti, idli, paneer...</div>'; return; }
+  res.innerHTML = matches.map((f,i) => `
+    <div class="food-item" onclick="addFood(${i},'${q}')">
+      <div><div class="food-name">${f.n}</div><div class="food-cal">${f.c} kcal · P:${f.p}g · F:${f.f}g · Fibre:${f.fi}g</div></div>
+      <button class="food-add-btn">+</button>
+    </div>`).join('');
+  // Store filtered for click
+  window._lastSearch = matches;
+}
+
+function addFood(idx, q) {
+  const food = window._lastSearch[idx];
+  db.foodLogs.push({ date: todayStr(), ts: new Date().toISOString(), meal: selectedMeal, name: food.n, calories: food.c, protein: food.p, fat: food.f, fibre: food.fi });
+  checkStreak(); saveDB(db); addXP(15, '— meal logged 🥗');
+  document.getElementById('food-search').value = '';
+  document.getElementById('food-results').innerHTML = '';
+  refreshFood();
+}
+
+function delFood(idx) {
+  const today = todayStr();
+  const todayLogs = db.foodLogs.filter(f => f.date === today);
+  const entry = todayLogs[idx];
+  db.foodLogs = db.foodLogs.filter(f => f !== entry);
+  saveDB(db); refreshFood();
+}
+
+function refreshFood() {
+  const today = todayStr();
+  const todayLogs = db.foodLogs.filter(f => f.date === today);
+  const totalCal = todayLogs.reduce((s,f) => s+f.calories, 0);
+  const target = 1400; // ~calorie target for her profile
+  document.getElementById('cal-consumed').textContent = totalCal + ' kcal eaten';
+  const rem = target - totalCal;
+  document.getElementById('cal-remaining').textContent = rem >= 0 ? rem + ' kcal remaining' : Math.abs(rem) + ' kcal over';
+  document.getElementById('cal-remaining').style.color = rem < 0 ? 'var(--accent)' : 'var(--green)';
+  document.getElementById('cal-target-disp').textContent = target;
+  const pct = Math.min(Math.round((totalCal/target)*100),100);
+  document.getElementById('calorie-bar').style.width = pct + '%';
+  document.getElementById('calorie-bar').style.background = pct > 100 ? 'var(--accent)' : pct > 80 ? '#FFA726' : 'var(--green)';
+  document.getElementById('cal-percent').textContent = pct + '%';
+  const loggedEl = document.getElementById('logged-meals');
+  if (!todayLogs.length) { loggedEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🥗</div>No meals logged yet</div>'; return; }
+  loggedEl.innerHTML = todayLogs.map((f,i) => `
+    <div class="logged-meal">
+      <div class="logged-meal-left">
+        <div class="logged-meal-name">${f.name}</div>
+        <div class="logged-meal-meta">${f.meal} · ${f.calories} kcal · P:${f.protein}g</div>
+      </div>
+      <button class="del-btn" onclick="delFood(${i})">🗑</button>
+    </div>`).join('');
+}
+
+// ============================================================
+// HABITS
+// ============================================================
+const HABITS_DEF = [
+  { id:'water', name:'Drink 8 glasses of water', icon:'💧', desc:'2 litres/day — joint lubrication & thyroid', steps:8, pts:20 },
+  { id:'protein', name:'Hit protein goal (50g)', icon:'🥛', desc:'Check food log — dal, paneer, curd, sprouts', steps:null, pts:20 },
+  { id:'fibre', name:'25g fibre today', icon:'🌾', desc:'Whole grains, dal, sabzi, fruits', steps:null, pts:15 },
+  { id:'omega3', name:'Omega-3 (walnuts/flax)', icon:'🌰', desc:'4 walnuts or 1 tbsp flaxseeds', steps:null, pts:15 },
+  { id:'sunlight', name:'15 min morning sunlight', icon:'☀️', desc:'Vitamin D for RA & bone health', steps:null, pts:15 },
+  { id:'movement', name:'Gentle movement (10 min)', icon:'🚶', desc:'Walking or chair yoga — low impact for knees', steps:null, pts:20 },
+  { id:'nosugar', name:'No added sugar today', icon:'🚫', desc:'Skip biscuits, sweets, sugary chai', steps:null, pts:15 },
+];
+
+function renderHabits() {
+  const today = todayStr();
+  const listEl = document.getElementById('habits-list');
+  let html = '<div class="card-title"><span class="icon">🎯</span>Habit Checklist</div>';
+  HABITS_DEF.forEach(h => {
+    const key = today+'_'+h.id;
+    const done = !!db.habits[key];
+    if (h.steps) {
+      // Water with steps
+      const stepsKey = today+'_'+h.id+'_steps';
+      const filled = db.habits[stepsKey] || 0;
+      let stepsHTML = '';
+      for (let i=0;i<h.steps;i++) {
+        stepsHTML += `<div class="habit-step ${i<filled?'filled':''}" onclick="incWater()"></div>`;
+      }
+      html += `<div class="habit-item ${filled>=h.steps?'done':''}" style="flex-direction:column;align-items:flex-start;gap:8px;">
+        <div style="display:flex;align-items:center;gap:14px;width:100%;">
+          <div class="habit-check"><span class="habit-check-icon">✓</span></div>
+          <div class="habit-info">
+            <div class="habit-name">${h.icon} ${h.name}</div>
+            <div class="habit-desc">${h.desc} · ${filled}/${h.steps} glasses</div>
+          </div>
+          <div class="habit-pts">+${h.pts}</div>
+        </div>
+        <div class="habit-progress">${stepsHTML}</div>
+      </div>`;
+    } else {
+      html += `<div class="habit-item ${done?'done':''}" onclick="toggleHabit('${h.id}')">
+        <div class="habit-check"><span class="habit-check-icon">✓</span></div>
+        <div class="habit-info">
+          <div class="habit-name">${h.icon} ${h.name}</div>
+          <div class="habit-desc">${h.desc}</div>
+        </div>
+        <div class="habit-pts">+${h.pts}</div>
+      </div>`;
+    }
+  });
+  listEl.innerHTML = html;
+  updateHabitsProgress();
+}
+
+function toggleHabit(id) {
+  const key = todayStr()+'_'+id;
+  const wasDone = !!db.habits[key];
+  db.habits[key] = !wasDone;
+  if (!wasDone) {
+    const h = HABITS_DEF.find(x => x.id===id);
+    checkStreak(); saveDB(db); addXP(h.pts, `— ${h.name} ✅`);
+  } else { saveDB(db); }
+  renderHabits();
+}
+
+function incWater() {
+  const today = todayStr();
+  const stepsKey = today+'_water_steps';
+  const prev = db.habits[stepsKey] || 0;
+  if (prev >= 8) { showToast('💧 Already hit 8 glasses — great!'); return; }
+  db.habits[stepsKey] = prev + 1;
+  if (prev+1 >= 8) {
+    db.habits[today+'_water'] = true;
+    checkStreak(); saveDB(db); addXP(20, '— 8 glasses done 💧');
+  } else { saveDB(db); showToast(`💧 Glass ${prev+1} of 8`); }
+  renderHabits();
+}
+
+function updateHabitsProgress() {
+  const today = todayStr();
+  const total = HABITS_DEF.length;
+  const done = HABITS_DEF.filter(h => db.habits[today+'_'+h.id]).length;
+  const pts = HABITS_DEF.filter(h => db.habits[today+'_'+h.id]).reduce((s,h)=>s+h.pts,0);
+  document.getElementById('habits-done-count').textContent = `${done} / ${total} done`;
+  document.getElementById('habits-pts-earned').textContent = pts + ' pts earned';
+  document.getElementById('habits-bar').style.width = Math.round((done/total)*100)+'%';
+}
+
+// ============================================================
+// BMI
+// ============================================================
+function calcBMI(w, h) { return +(w / ((h/100)**2)).toFixed(1); }
+function bmiCategory(bmi) {
+  if (bmi < 18.5) return {cat:'Underweight', color:'#4FC3F7'};
+  if (bmi < 25) return {cat:'Normal weight ✅', color:'#66BB6A'};
+  if (bmi < 30) return {cat:'Overweight', color:'#FFA726'};
+  if (bmi < 35) return {cat:'Obese Class I', color:'#EF5350'};
+  return {cat:'Obese Class II', color:'#B71C1C'};
+}
+
+function logWeight() {
+  const w = parseFloat(document.getElementById('weight-input').value);
+  const h = parseFloat(document.getElementById('height-input').value) || db.profile.height || 155;
+  if (!w || w < 30 || w > 200) { showToast('Please enter a valid weight (30–200 kg)'); return; }
+  db.profile.height = h;
+  const bmi = calcBMI(w, h);
+  db.weightLogs.push({ date: todayStr(), ts: new Date().toISOString(), weight: w, bmi });
+  checkStreak(); saveDB(db); addXP(10, '— weight logged ⚖️');
+  renderBMI();
+}
+
+function renderBMI() {
+  const logs = db.weightLogs;
+  const last = logs.length ? logs[logs.length-1] : null;
+  const bmi = last ? last.bmi : 31.0;
+  const w = last ? last.weight : null;
+  const h = db.profile.height || 155;
+  const { cat, color } = bmiCategory(bmi);
+  document.getElementById('bmi-number').textContent = bmi;
+  document.getElementById('bmi-number').style.color = color;
+  document.getElementById('bmi-category').textContent = cat;
+  // Target weight (BMI 24)
+  const targetW = +(24 * (h/100)**2).toFixed(1);
+  document.getElementById('target-weight-disp').textContent = targetW + ' kg';
+  if (w) {
+    const tolose = +(w - targetW).toFixed(1);
+    const weeks = tolose > 0 ? Math.ceil(tolose/0.5) : 0;
+    document.getElementById('est-time').textContent = tolose > 0 ? `~${Math.ceil(weeks/4)} months (${weeks} weeks)` : 'You\'re at target! 🎉';
+  }
+  // Weight history
+  const histEl = document.getElementById('weight-history-list');
+  if (!logs.length) { histEl.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div>No entries yet. Log your first weight!</div>'; drawWeightChart([]); return; }
+  histEl.innerHTML = [...logs].reverse().slice(0,8).map((e,i,arr) => {
+    const prev = arr[i+1];
+    const delta = prev ? +(e.weight - prev.weight).toFixed(1) : null;
+    return `<div class="weight-entry">
+      <div><div class="weight-val">${e.weight} kg</div><div class="weight-date">${fmtDate(e.ts)}</div></div>
+      <div style="text-align:right;">
+        <div style="font-size:14px;color:var(--text2);">BMI ${e.bmi}</div>
+        ${delta!==null ? `<div class="weight-delta ${delta<=0?'down':'up'}">${delta>0?'+':''}${delta} kg</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  drawWeightChart(logs.slice(-10).map(e => e.weight));
+}
+
+function drawWeightChart(vals) {
+  const canvas = document.getElementById('weight-chart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 300; const H = 70;
+  canvas.width = W*2; canvas.height = H*2; canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.scale(2,2);
+  ctx.clearRect(0,0,W,H);
+  if (vals.length < 2) { ctx.fillStyle='#ccc'; ctx.font='12px sans-serif'; ctx.fillText('Log more entries to see trend',10,H/2); return; }
+  const min=Math.min(...vals)-2, max=Math.max(...vals)+2, pad=10;
+  const xStep=(W-pad*2)/(vals.length-1);
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const x=pad+i*xStep, y=H-pad-((v-min)/(max-min))*(H-pad*2);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='#4ECDC4'; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
+  vals.forEach((v,i)=>{
+    const x=pad+i*xStep, y=H-pad-((v-min)/(max-min))*(H-pad*2);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle='#4ECDC4'; ctx.fill();
+    ctx.fillStyle='#555'; ctx.font='9px sans-serif'; ctx.fillText(v,x-8,y-5);
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+initGreeting();
+refreshDashboard();
+</script>
+</body>
+</html>
